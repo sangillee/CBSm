@@ -6,6 +6,8 @@
  * Use this directly from matlab or R (or others) to calculate coordinates.
  */
 
+import java.lang.Math;
+
 public class CBScalc {
     public static double[] getyhat(double[] xpos, double[] ypos, double[] x){
         int numpoints = xpos.length;
@@ -18,6 +20,7 @@ public class CBScalc {
         double t = 0, ft; // storage spaces for t and f(t)
         double precision = 0.0000001; // parameter for solution sensitivity
         double[] bound = {0,0}, boundval = {0,0}; // storage space for t min max bounds and ft at those bounds
+        boolean check1, check2, check3; // monotonicity constraint checking
         
         
         // iterate through each piece and store cubic equation coefficients
@@ -30,10 +33,11 @@ public class CBScalc {
                 if((xpos[i]-xpos[i-3])< 0) {throw new RuntimeException("A CBS anchor point is placed before its previous anchor point. Possibly order of xpos in CBS is reversed.");}
                 else {throw new RuntimeException("one or more CBS piece is too short for stable computation. If you repeatedly see this message, consider reducing the number of pieces");}
             }
-            if((xpos[i-1]-xpos[i-2])<0){
-                if( ((xpos[i-1]-xpos[i-2])*(xpos[i-1]-xpos[i-2])) > ((xpos[i]-xpos[i-1])*(xpos[i-2]-xpos[i-3])) ){
-                    throw new RuntimeException("X coordinates not monotonic as a function of t. Multiple y-values may exist for x");
-                }
+            check1 = -Math.sqrt((xpos[i]-xpos[i-1])*(xpos[i-2]-xpos[i-3])) < (xpos[i-1]-xpos[i-2]);
+            check2 = xpos[i-3] <= xpos[i-2];
+            check3 = xpos[i-1] <= xpos[i];
+            if(!check1 || !check2 || !check3){
+                throw new RuntimeException("X coordinates not monotonic as a function of t. Multiple y-values may exist for x");
             }
         }
         
