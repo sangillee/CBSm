@@ -3,15 +3,16 @@ function out = CBS_ITC(choice,Amt1,Var1,Amt2,Var2,numpiece)
 % choice would be 1 if they chose option 1 or 0 if they chose option 2
 % Var should be scaled delay, (e.g., X = Delay./180)
 assert( all(Var1<=1) && all(Var2<=1) && all(Var1>=0) && all(Var2>=0) ,'delay not normalized to [0 1]');
+minpad = 1e-04; maxpad = 1-minpad;
 
-lb = [-36,zeros(1,6*numpiece-1)]; % lower bounds
-ub = [36,ones(1,6*numpiece-1)]; % upper bounds
+lb = [-36,minpad.*ones(1,6*numpiece-1)]; % lower bounds
+ub = [36,maxpad.*ones(1,6*numpiece-1)]; % upper bounds
 numfit = 40*numpiece; % number of search starting points
 
 if numpiece==1 % active parameters (6): logbeta, x2, x3, y2, y3, y4
-    A = [0,0,0,0,-1,1;0,0,0,-1,0,1]; b = [0;0]; % linear constraints: y4-y3<0, y4-y2<0
+    A = [0,0,0,0,-1,1;0,0,0,-1,0,1]; b = [-minpad,-minpad]; % linear constraints: y4-y3<0, y4-y2<0
     nonlcon = []; % no non-linear constraints
-    options = optimset('Display','off','Algorithm','sqp');
+    options = optimset('Display','off','Algorithm','sqp','TolCon',minpad);
     x0 = [0,1/3,2/3,2/3,1/3,0.01];
 elseif numpiece == 2 % active parameters (12): logbeta, x2,x3,x4,x5,x6, y2,y3,y4,y5,y6,y7
     % linear constraints:
@@ -25,9 +26,9 @@ elseif numpiece == 2 % active parameters (12): logbeta, x2,x3,x4,x5,x6, y2,y3,y4
         zeros(1,6), 0,0,-1,0,1,0;...  % y6-y4<0
         zeros(1,6), 0,0,0,-1,0,1;...  % y7-y5<0
         zeros(1,6), 0,0,0,0,-1,1];    % y7-y6<0
-    b = zeros(10,1);
+    b = -minpad.*ones(10,1);
     nonlcon = @twopiece_nonlincon; % non-linear constraints
-    options = optimset('Display','off','GradConstr','on','Algorithm','sqp');
+    options = optimset('Display','off','GradConstr','on','Algorithm','sqp','TolCon',minpad);
     x0 = [0,1/6,2/6,3/6,4/6,5/6, 5/6,4/6,3/6,2/6,1/6,0.01];
 end
 problem = createOptimProblem('fmincon','x0',x0,'objective',@(x)negLL(x,Amt1,Var1,Amt2,Var2,choice),'lb',lb,'ub',ub,'Aineq',A,'bineq',b,'nonlcon',nonlcon,'options',options);

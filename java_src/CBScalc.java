@@ -3,6 +3,7 @@
  * modified: 1/27/2020: 1. moving all error checking to outer-shells and not here.
  *                      2. combining two methods into one for faster speed.
  *                      3. checking for monotonicity constraints and minimum length
+ * modified: 1/28/2020: remove checking for monotonicity...
  * Use this directly from matlab or R (or others) to calculate coordinates.
  */
 
@@ -20,7 +21,7 @@ public class CBScalc {
         double t = 0, ft; // storage spaces for t and f(t)
         double precision = 0.0000001; // parameter for solution sensitivity
         double[] bound = {0,0}, boundval = {0,0}; // storage space for t min max bounds and ft at those bounds
-        boolean check1, check2, check3; // monotonicity constraint checking
+//         boolean check1, check2, check3; // monotonicity constraint checking
         
         
         // iterate through each piece and store cubic equation coefficients
@@ -29,16 +30,17 @@ public class CBScalc {
             abcd[0][piecenum] = -xpos[i-3]+3*xpos[i-2]-3*xpos[i-1]+xpos[i];
             abcd[1][piecenum] = 3*xpos[i-3]-6*xpos[i-2]+3*xpos[i-1];
             abcd[2][piecenum] = -3*xpos[i-3]+3*xpos[i-2];
-            if((xpos[i]-xpos[i-3])< precision) {
-                if((xpos[i]-xpos[i-3])< 0) {throw new RuntimeException("A CBS anchor point is placed before its previous anchor point. Possibly order of xpos in CBS is reversed.");}
-                else {throw new RuntimeException("one or more CBS piece is too short for stable computation. If you repeatedly see this message, consider reducing the number of pieces");}
-            }
-            check1 = -Math.sqrt((xpos[i]-xpos[i-1])*(xpos[i-2]-xpos[i-3])) < (xpos[i-1]-xpos[i-2]);
-            check2 = xpos[i-3] <= xpos[i-2];
-            check3 = xpos[i-1] <= xpos[i];
-            if(!check1 || !check2 || !check3){
-                throw new RuntimeException("X coordinates not monotonic as a function of t. Multiple y-values may exist for x");
-            }
+            // I used to check for monotonicity violations, but this causes outer optimization routines to fail because they often violate boundaries and constraints.
+//             if((xpos[i]-xpos[i-3])< precision) {
+//                 if((xpos[i]-xpos[i-3])< 0) {throw new RuntimeException("A CBS anchor point is placed before its previous anchor point. Possibly order of xpos in CBS is reversed.");}
+//                 else {throw new RuntimeException("one or more CBS piece is too short for stable computation. If you repeatedly see this message, consider reducing the number of pieces");}
+//             }
+//             check1 = -Math.sqrt((xpos[i]-xpos[i-1])*(xpos[i-2]-xpos[i-3])) < (xpos[i-1]-xpos[i-2]);
+//             check2 = xpos[i-3] <= xpos[i-2];
+//             check3 = xpos[i-1] <= xpos[i];
+//             if(!check1 || !check2 || !check3){
+//                 throw new RuntimeException("X coordinates not monotonic as a function of t. Multiple y-values may exist for x");
+//             }
         }
         
         // iterate through all data points and calculate their y-coordinates
