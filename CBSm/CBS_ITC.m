@@ -1,14 +1,46 @@
-function out = CBS_ITC(choice,Amt1,Var1,Amt2,Var2,numpiece)
-% function for using fmincon to fit CBS 1-piece or 2-piece functions to intertemporal choice
-% choice would be 1 if they chose option 1 or 0 if they chose option 2
-% Var should be scaled delay, (e.g., X = Delay./180)
-assert( all(Var1<=1) && all(Var2<=1) && all(Var1>=0) && all(Var2>=0) ,'delay not normalized to [0 1]');
-minpad = 1e-04; maxpad = 1-minpad;
+% CBS_ITC.m
+%
+% Fit either a 1-piece or 2-piece CBS latent utility function to binary intertemporal choice data.
+%
+% The input data has n choices (ideally n > 100) between two reward options.
+% Option 1 is receiving 'Amt1' in 'Delay1' and Option 2 is receiving 'Amt2' in 'Delay2' (e.g., $40 in 20 days vs. $20 in 3 days).
+% One of the two options may be immediate (i.e., delay = 0; e.g., $40 in 20 days vs. $20 today).
+% 'choice' should be 1 if option 1 is chosen, 0 if option 2 is chosen.
+%
+% 'choice' : Vector of 0s and 1s. 1 if the choice was option 1, 0 if the choice was option 2.
+% 'Amt1' : Vector of positive real numbers. Reward amount of choice 1.
+% 'Delay1' : Vector of positive real numbers. Delay until the reward of choice 1.
+% 'Amt2' : Vector of positive real numbers. Reward amount of choice 2.
+% 'Delay2' : Vector of positive real numbers. Delay until the reward of choice 2.
+% 'numpiece' : Either 1 or 2. Number of CBS pieces to use.
+% 'out' : A struct containing the following:
+%       'type' : either 'CBS1' or 'CBS2' depending on the number of pieces
+%       'LL' : log likelihood of the model
+%       'numparam' : number of total parameters in the model
+%       'scale' : scaling factor of the logit model
+%       'xpos': x coordinates of the fitted CBS function
+%       'ypos': y coordinates of the fitted CBS function
+%       'AUC': area under the curve of the fitted CBS function. Normalized to be between 0 and 1.
+%       'normD' : The domain of CBS function runs from 0 to \code{normD}. Specifically, this is the constant used to normalize all delays between 0 and 1, since CBS is fitted in a unit square first and then scaled up.
 
-lb = [-36,minpad.*ones(1,6*numpiece-1)]; % lower bounds
-ub = [36,maxpad.*ones(1,6*numpiece-1)]; % upper bounds
+function out = CBS_ITC(choice,Amt1,Delay1,Amt2,Delay2,numpiece)
+% error checking
+assert(all(choice == 0 | choice == 1),"Choice should be a vector of 0 or 1")
+assert(all(Amt1 >= 0 & Amt2 >=0),"Negative amounts are not allowed")
+assert(all(Delay1 >= 0 & Delay2 >= 0),"Negative delays are not allowed")
+assert(numpiece == 1 || numpiece ==2,"Sorry! Only 1-piece and 2-piece CBS functions are supported at the moment.")
+
+minpad = 1e-04; maxpad = 1-minpad; % pad around bounds because the solving algorithm tests values around the bounds
 numfit = 40*numpiece; % number of search starting points
 
+% normalizing delay to [0 1] for easier parameter search
+nD = 1;
+if (any(Delay1 > 1) || any(Delay2 > 1))
+    nD = max([Delay1;Delay2]); Delay1 = Delay1./nD; Delay2 = Delay2./nD;
+end
+
+% parameter bounds and constraints
+lb = [-36,minpad.*ones(1,6*numpiece-1)]; ub = [36,maxpad.*ones(1,6*numpiece-1)];
 if numpiece==1 % active parameters (6): logbeta, x2, x3, y2, y3, y4
     A = [0,0,0,0,-1,1;0,0,0,-1,0,1]; b = [-minpad,-minpad]; % linear constraints: y4-y3<0, y4-y2<0
     nonlcon = []; % no non-linear constraints
@@ -31,15 +63,16 @@ elseif numpiece == 2 % active parameters (12): logbeta, x2,x3,x4,x5,x6, y2,y3,y4
     options = optimset('Display','off','GradConstr','on','Algorithm','sqp','TolCon',minpad);
     x0 = [0,1/6,2/6,3/6,4/6,5/6, 5/6,4/6,3/6,2/6,1/6,0.01];
 end
-problem = createOptimProblem('fmincon','x0',x0,'objective',@(x)negLL(x,Amt1,Var1,Amt2,Var2,choice),'lb',lb,'ub',ub,'Aineq',A,'bineq',b,'nonlcon',nonlcon,'options',options);
-[outparam,fval] = run(MultiStart,problem,numfit); % you can use globalsearch if you want: outparam = run(GlobalSearch,problem);
-out.type = ['CBS',num2str(numpiece)];
-out.LL = -fval*length(choice);
-out.numparam = size(outparam,2);
-out.scale = exp(outparam(1));
-out.xpos = [0,outparam(2:(out.numparam/2)),1];
-out.ypos = [1,outparam((out.numparam/2 +1):end)];
-out.AUC = CBSfunc(out.xpos,out.ypos);
+
+% fitting
+problem = createOptimProblem('fmincon','x0',x0,'objective',@(x)negLL(x,Amt1,Delay1,Amt2,Delay2,choice),'lb',lb,'ub',ub,'Aineq',A,'bineq',b,'nonlcon',nonlcon,'options',options);
+[outparam,fval] = run(MultiStart,problem,numfit);
+
+% organizing output
+out.type = ['CBS',num2str(numpiece)]; out.LL = -fval*length(choice);
+out.numparam = size(outparam,2); out.scale = exp(outparam(1));
+out.xpos = nD.*[0,outparam(2:(out.numparam/2)),1]; out.ypos = [1,outparam((out.numparam/2 +1):end)];
+out.AUC = CBSfunc(out.xpos,out.ypos); out.normD = nD;
 end
 
 function negLL = negLL(params,Amt1,Var1,Amt2,Var2,choice)

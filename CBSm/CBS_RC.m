@@ -1,17 +1,46 @@
-function out = CBS_RC(choice,Amt1,Var1,Amt2,Var2,numpiece)
-% function for using fmincon to fit CBS 1-piece or 2-piece functions to risky choice
-% choice would be 1 if they chose option 1 or 0 if they chose option 2
-% Var should be probability
-assert( all(Var1<=1) && all(Var2<=1) && all(Var1>=0) && all(Var2>=0) ,'prob not within [0 1]');
+% CBS_RC.m
+%
+% Fit either a 1-piece or 2-piece CBS latent utility function to binary risky choice data.
+%
+% The input data has n choices (ideally n > 100) between two reward options.
+% Option 1 is receiving 'Amt1' with probability 'Prob1' and Option 2 is receiving 'Amt2' with probability 'Prob2' (e.g., $40 with 53% chance vs. $20 with 90% chance).
+% One of the two options may be certain (i.e., prob = 1; e.g., $40 with 53% chance vs. $20 for sure).
+% 'choice' should be 1 if option 1 is chosen, 0 if option 2 is chosen.
+%
+% 'choice Vector of 0s and 1s. 1 if the choice was option 1, 0 if the choice was option 2.
+% 'Amt1' : Vector of positive real numbers. Reward amount of choice 1.
+% 'Prob1' : Vector of positive real numbers between 0 and 1. Probability of winning the reward of choice 1.
+% 'Amt2' : Vector of positive real numbers. Reward amount of choice 2.
+% 'Prob2' : Vector of positive real numbers between 0 and 1. Probability of winning the reward of choice 2.
+% 'numpiece' : Either 1 or 2. Number of CBS pieces to use.
+% 'out' : A struct containing the following:
+%       'type' : either 'CBS1' or 'CBS2' depending on the number of pieces
+%       'LL' : log likelihood of the model
+%       'numparam' : number of total parameters in the model
+%       'scale' : scaling factor of the logit model
+%       'xpos' : x coordinates of the fitted CBS function
+%       'ypos' : y coordinates of the fitted CBS function
+%       'AUC' : area under the curve of the fitted CBS function. Normalized to be between 0 and 1.
 
-lb = [-36,zeros(1,6*numpiece-2)]; % lower bounds
-ub = [36,ones(1,6*numpiece-2)]; % upper bounds
+function out = CBS_RC(choice,Amt1,Prob1,Amt2,Prob2,numpiece)
+% error checking
+assert(all(choice == 0 | choice == 1),"Choice should be a vector of 0 or 1")
+assert(all(Amt1 >= 0 & Amt2 >=0),"Negative amounts are not allowed")
+assert(all(Prob1 >= 0 & Prob2 >= 0),"Negative delays are not allowed")
+assert(numpiece == 1 || numpiece ==2,"Sorry! Only 1-piece and 2-piece CBS functions are supported at the moment.")
+
+minpad = 1e-04; maxpad = 1-minpad; % pad around bounds because the solving algorithm tests values around the bounds
 numfit = 40*numpiece; % number of search starting points
 
+% checking to make sure probability is within 0 and 1
+assert(all(Prob1<=1 | Prob2<=1),"prob not within [0 1]");
+
+% parameter bounds and constraints
+lb = [-36,minpad.*ones(1,6*numpiece-2)]; ub = [36,maxpad.*ones(1,6*numpiece-2)];
 if numpiece==1 % active parameters (5): logbeta, x2, x3, y2, y3
     A = []; b = []; % no linear constraints
     nonlcon = []; % no non-linear constraints
-    options = optimset('Display','off','Algorithm','sqp');
+    options = optimset('Display','off','Algorithm','sqp','TolCon',minpad);
     x0 = [0,1/3,2/3,1/3,2/3];
 elseif numpiece == 2 % active parameters (11): logbeta, x2,x3,x4,x5,x6, y2,y3,y4,y5,y6
     % linear constraints:
@@ -23,21 +52,20 @@ elseif numpiece == 2 % active parameters (11): logbeta, x2,x3,x4,x5,x6, y2,y3,y4
          zeros(1,6), 0,1,-1,0,0;...     % y3-y4<0
          zeros(1,6), 0,0,1,-1,0;...     % y4-y5<0
          zeros(1,6), 0,0,1,0,-1];       % y4-y6<0
-    
-    
-    b = zeros(8,1);
+    b = -minpad.*ones(8,1);
     nonlcon = @twopiece_nonlincon; % non-linear constraints
-    options = optimset('Display','off','GradConstr','on','Algorithm','sqp');
+    options = optimset('Display','off','GradConstr','on','Algorithm','sqp','TolCon',minpad);
     x0 = [0,1/6,2/6,3/6,4/6,5/6, 1/6,2/6,3/6,4/6,5/6];
 end
-problem = createOptimProblem('fmincon','x0',x0,'objective',@(x)negLL(x,Amt1,Var1,Amt2,Var2,choice),'lb',lb,'ub',ub,'Aineq',A,'bineq',b,'nonlcon',nonlcon,'options',options);
+
+% fitting
+problem = createOptimProblem('fmincon','x0',x0,'objective',@(x)negLL(x,Amt1,Prob1,Amt2,Prob2,choice),'lb',lb,'ub',ub,'Aineq',A,'bineq',b,'nonlcon',nonlcon,'options',options);
 [outparam,fval] = run(MultiStart,problem,numfit);
-out.type = ['CBS',num2str(numpiece)];
-out.LL = -fval*length(choice);
-out.numparam = size(outparam,2);
-out.scale = exp(outparam(1));
-out.xpos = [0,outparam(2:((out.numparam+1)/2)),1];
-out.ypos = [0,outparam(((out.numparam+1)/2+1):end),1];
+
+% organizing output
+out.type = ['CBS',num2str(numpiece)]; out.LL = -fval*length(choice);
+out.numparam = size(outparam,2); out.scale = exp(outparam(1));
+out.xpos = [0,outparam(2:((out.numparam+1)/2)),1]; out.ypos = [0,outparam(((out.numparam+1)/2+1):end),1];
 out.AUC = CBSfunc(out.xpos,out.ypos);
 end
 
