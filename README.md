@@ -10,4 +10,6 @@ The folder 'examples' contains an example MATLAB script and example data to show
 
 The folder 'java_src' contains the original java code for the function 'CBScalc.class', which is inside CBSm. This is here so that you can look at the source code if you want to, but this is not a necessary part of the package as the compiled code 'CBScalc.class' is already located inside the folder 'CBSm'.
 
+The last stable build version can be found under the release tab.
+
 Any questions can be directed to sangillee3rd@gmail.com the github page: github.com/sangillee/CBSm
