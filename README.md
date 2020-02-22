@@ -18,5 +18,4 @@ as the compiled code 'CBScalc.class' is already located inside the folder 'CBSm'
 
 The last stable build version can be found under the release tab.
 
-PsyArXiv : Lee, Glaze, Bradlow, Kable, (2019) <https://doi.org/10.31234/osf.io/2ugwr>.  
-Any questions can be directed to sangillee3rd@gmail.com the github page: github.com/sangillee/CBSm
+PsyArXiv : Lee, Glaze, Bradlow, Kable, (2019) <https://doi.org/10.31234/osf.io/2ugwr>
