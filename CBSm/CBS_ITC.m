@@ -21,7 +21,7 @@
 %       'xpos': x coordinates of the fitted CBS function
 %       'ypos': y coordinates of the fitted CBS function
 %       'AUC': area under the curve of the fitted CBS function. Normalized to be between 0 and 1.
-%       'normD' : The domain of CBS function runs from 0 to \code{normD}. Specifically, this is the constant used to normalize all delays between 0 and 1, since CBS is fitted in a unit square first and then scaled up.
+%       'normD' : The domain of CBS function runs from 0 to normD. Specifically, this is the constant used to normalize all delays between 0 and 1, since CBS is fitted in a unit square first and then scaled up.
 
 function out = CBS_ITC(choice,Amt1,Delay1,Amt2,Delay2,numpiece)
 % error checking
