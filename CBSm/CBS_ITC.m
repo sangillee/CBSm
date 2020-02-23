@@ -25,10 +25,10 @@
 
 function out = CBS_ITC(choice,Amt1,Delay1,Amt2,Delay2,numpiece)
 % error checking
-assert(all(choice == 0 | choice == 1),"Choice should be a vector of 0 or 1")
-assert(all(Amt1 >= 0 & Amt2 >=0),"Negative amounts are not allowed")
-assert(all(Delay1 >= 0 & Delay2 >= 0),"Negative delays are not allowed")
-assert(numpiece == 1 || numpiece ==2,"Sorry! Only 1-piece and 2-piece CBS functions are supported at the moment.")
+assert(all(choice == 0 | choice == 1),'Choice should be a vector of 0 or 1')
+assert(all(Amt1 >= 0 & Amt2 >=0),'Negative amounts are not allowed')
+assert(all(Delay1 >= 0 & Delay2 >= 0),'Negative delays are not allowed')
+assert(numpiece == 1 || numpiece ==2,'Sorry! Only 1-piece and 2-piece CBS functions are supported at the moment.')
 
 minpad = 1e-04; maxpad = 1-minpad; % pad around bounds because the solving algorithm tests values around the bounds
 numfit = 40*numpiece; % number of search starting points

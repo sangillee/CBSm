@@ -24,16 +24,16 @@
 
 function out = CBS_RC(choice,Amt1,Prob1,Amt2,Prob2,numpiece)
 % error checking
-assert(all(choice == 0 | choice == 1),"Choice should be a vector of 0 or 1")
-assert(all(Amt1 >= 0 & Amt2 >=0),"Negative amounts are not allowed")
-assert(all(Prob1 >= 0 & Prob2 >= 0),"Negative delays are not allowed")
-assert(numpiece == 1 || numpiece ==2,"Sorry! Only 1-piece and 2-piece CBS functions are supported at the moment.")
+assert(all(choice == 0 | choice == 1),'Choice should be a vector of 0 or 1')
+assert(all(Amt1 >= 0 & Amt2 >=0),'Negative amounts are not allowed')
+assert(all(Prob1 >= 0 & Prob2 >= 0),'Negative delays are not allowed')
+assert(numpiece == 1 || numpiece ==2,'Sorry! Only 1-piece and 2-piece CBS functions are supported at the moment.')
 
 minpad = 1e-04; maxpad = 1-minpad; % pad around bounds because the solving algorithm tests values around the bounds
 numfit = 40*numpiece; % number of search starting points
 
 % checking to make sure probability is within 0 and 1
-assert(all(Prob1<=1 | Prob2<=1),"prob not within [0 1]");
+assert(all(Prob1<=1 | Prob2<=1),'prob not within [0 1]');
 
 % parameter bounds and constraints
 lb = [-36,minpad.*ones(1,6*numpiece-2)]; ub = [36,maxpad.*ones(1,6*numpiece-2)];

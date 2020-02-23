@@ -14,6 +14,7 @@ Choice = ITCdat.Choice;
 out = CBS_ITC(Choice,Amount1,Delay1,Amount2,Delay2,2);
 
 % plot the choices (x = Delay, y = relative amount : 20 / delayed amount)
+figure
 plot(Delay1(Choice==1),20./Amount1(Choice==1),'bo')
 hold on
 plot(Delay1(Choice==0),20./Amount1(Choice==0),'ro')
@@ -34,6 +35,7 @@ Choice = RCdat.Choice;
 out = CBS_RC(Choice,Amount1,Prob1,Amount2,Prob2,2);
 
 % plot the choices (x = Probability, y = relative amount : 20 / delayed amount)
+figure
 plot(Prob1(Choice==1),20./Amount1(Choice==1),'bo')
 hold on
 plot(Prob1(Choice==0),20./Amount1(Choice==0),'ro')

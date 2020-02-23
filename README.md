@@ -1,4 +1,4 @@
-# CBSm
+# CBSm 1.0.1
 
 MATLAB package for using Cubic Bezier Spline as a function approximator in modeling latent utility functions.  
 While Cubic Bezier Splines (CBS) are heavily used in the graphics software industry, it can also be used as a flexible  
