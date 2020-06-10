@@ -72,7 +72,7 @@ problem = createOptimProblem('fmincon','x0',x0,'objective',@(x)negLL(x,Amt1,Dela
 out.type = ['CBS',num2str(numpiece)]; out.LL = -fval*length(choice);
 out.numparam = size(outparam,2); out.scale = exp(outparam(1));
 out.xpos = nD.*[0,outparam(2:(out.numparam/2)),1]; out.ypos = [1,outparam((out.numparam/2 +1):end)];
-out.AUC = CBSfunc(out.xpos,out.ypos); out.normD = nD;
+out.AUC = CBSfunc(out.xpos./nD,out.ypos); out.normD = nD;
 end
 
 function negLL = negLL(params,Amt1,Var1,Amt2,Var2,choice)
