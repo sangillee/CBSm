@@ -70,6 +70,8 @@ problem = createOptimProblem('fmincon','x0',x0,'objective',@(x)negLL(x,Amt1,Dela
 
 % organizing output
 out.type = ['CBS',num2str(numpiece)]; out.LL = -fval*length(choice);
+out.LL0 = log(mean(choice)).*sum(choice)+log(1-mean(choice)).*sum(1-choice);
+out.R2 = 1-out.LL/out.LL0;
 out.numparam = size(outparam,2); out.scale = exp(outparam(1));
 out.xpos = nD.*[0,outparam(2:(out.numparam/2)),1]; out.ypos = [1,outparam((out.numparam/2 +1):end)];
 out.AUC = CBSfunc(out.xpos./nD,out.ypos); out.normD = nD;
